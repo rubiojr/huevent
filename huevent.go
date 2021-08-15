@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -13,6 +12,8 @@ import (
 	"os/exec"
 	"path"
 	"time"
+
+	"gopkg.in/yaml.v2"
 )
 
 type config struct {
@@ -33,7 +34,7 @@ type HueventConfig struct {
 	Config struct {
 		Ip   string `yaml:"ip"`
 		User string `yaml:"user"`
-		Rate int `yaml:"pollingRateMs,omitempty"`
+		Rate int    `yaml:"pollingRateMs,omitempty"`
 	} `yaml:"config"`
 	Hooks        []Hook   `yaml:"hooks"`
 	DeviceFilter []string `yaml:"deviceFilter"`
@@ -185,15 +186,15 @@ func makeConfig() config {
 		fmt.Printf("Error: no Hue-Bridge configured at %s, run huevent with -pair to configure\n", *hueventConfigPath)
 		os.Exit(1)
 	}
-	
+
 	var pollTimeMs = time.Duration(333)
 
 	if hueventConfig.Config.Rate > 0 {
 		pollTimeMs = time.Duration(hueventConfig.Config.Rate)
 	}
-	
+
 	if *debug {
-		fmt.Printf("Polling-Rate: %s\n", pollTimeMs * time.Millisecond)
+		fmt.Printf("Polling-Rate: %s\n", pollTimeMs*time.Millisecond)
 	}
 
 	stateMap := make(map[string]map[string]string)
@@ -243,7 +244,7 @@ func poll(conf *config) {
 	if !conf.logHTTPError {
 		conf.logHTTPError = true
 	}
-	
+
 	if conf.printSensors {
 		var prettyJSON bytes.Buffer
 		_ = json.Indent(&prettyJSON, body, "", "\t")
@@ -253,7 +254,8 @@ func poll(conf *config) {
 }
 
 func exit(device string, eventType string, triggerOn string, conf *config) {
-	fmt.Printf("%s\t%s\t%s\n", device, eventType, triggerOn)
+	tnow := time.Now().Format("Mon Jan 2 15:04:05")
+	fmt.Printf("%s\t%s\t%s\t%s\n", tnow, device, eventType, triggerOn)
 
 	for _, hook := range *conf.hooks {
 
@@ -364,8 +366,8 @@ func executeCommand(cmdString string, deviceId string, eventType string, payload
 		fmt.Sprintf("HUEVENT_PAYLOAD=%s", payload)}
 
 	cmd.Env = append(os.Environ(), extraEnv...)
-	cmd.Stdout = os.Stderr
-	cmd.Stderr = os.Stderr
+	//cmd.Stdout = os.Stderr
+	//cmd.Stderr = os.Stderr
 	return cmd.Run()
 }
 
